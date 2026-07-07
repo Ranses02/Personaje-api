@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
+// Componente Header obligatorio con la identificación de los alumnos
 function Header() {
   return (
     <header className="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center">
@@ -12,12 +13,13 @@ function Header() {
 }
 
 export default function App() {
+  // 1. Definición de estados de la aplicación
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // NUEVO: Los estados ahora cargan sus datos iniciales desde el localStorage si existen
+  // Estados con lectura inicial desde localStorage para persistencia
   const [favorites, setFavorites] = useState(() => {
     const localData = localStorage.getItem('rm-favorites');
     return localData ? JSON.parse(localData) : [];
@@ -28,7 +30,7 @@ export default function App() {
     return localData ? JSON.parse(localData) : [];
   });
 
-  // Carga inicial de la API
+  // 2. Hook useEffect para consumir la API de Rick and Morty al cargar la app
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
@@ -50,16 +52,16 @@ export default function App() {
     fetchCharacters();
   }, []);
 
-  // NUEVO: Guardar automáticamente en localStorage cuando cambie el array de favoritos
+  // 3. Hooks useEffect para la persistencia automática en el LocalStorage
   useEffect(() => {
     localStorage.setItem('rm-favorites', JSON.stringify(favorites));
   }, [favorites]);
 
-  // NUEVO: Guardar automáticamente en localStorage cuando cambie el array de bloqueados
   useEffect(() => {
     localStorage.setItem('rm-blocked', JSON.stringify(blocked));
   }, [blocked]);
 
+  // 4. Funciones controladoras de eventos (Handlers)
   const toggleFavorite = (character) => {
     if (favorites.some(fav => fav.id === character.id)) {
       setFavorites(favorites.filter(fav => fav.id !== character.id));
@@ -77,6 +79,7 @@ export default function App() {
     setBlocked([]);
   };
 
+  // 5. Filtrado combinado (Busca por término escrito Y EXCLUYE los personajes bloqueados)
   const filteredCharacters = characters.filter((char) =>
     char.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     !blocked.some(b => b.id === char.id)
@@ -86,11 +89,13 @@ export default function App() {
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
       <Header />
       
+      {/* DISEÑO RESPONSIVO: Cambia de 1 columna en celulares a 4 columnas en pantallas medianas (md) */}
       <main className="flex-1 p-4 max-w-7xl w-full mx-auto grid grid-cols-1 md:grid-cols-4 gap-4">
         
-        {/* Panel Izquierdo/Central: Buscador, Controles y Listado */}
+        {/* Sección Central (Ocupa 3 de las 4 columnas en PC) */}
         <section className="md:col-span-3 space-y-4">
           
+          {/* Controles: Barra de búsqueda y botón de reinicio */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-3 items-center justify-between">
             <input
               type="text"
@@ -110,6 +115,7 @@ export default function App() {
             )}
           </div>
 
+          {/* Feedback de carga y errores en la interfaz */}
           {loading && (
             <div className="bg-blue-50 text-blue-700 p-4 rounded-xl border border-blue-200 text-center font-medium animate-pulse">
               Cargando personajes desde la API...
@@ -122,6 +128,7 @@ export default function App() {
             </div>
           )}
 
+          {/* Renderizado de Tarjetas */}
           {!loading && !error && (
             <>
               {filteredCharacters.length === 0 ? (
@@ -129,6 +136,7 @@ export default function App() {
                   No se encontraron personajes disponibles.
                 </div>
               ) : (
+                /* GRID DE TARJETAS: 1 col en celular, 2 en pantallas pequeñas (sm), 3 en pantallas grandes (lg) */
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredCharacters.map((char) => {
                     const isFav = favorites.some(fav => fav.id === char.id);
@@ -144,6 +152,7 @@ export default function App() {
                           </div>
                         </div>
 
+                        {/* Botones de interacción */}
                         <div className="p-4 pt-0">
                           <div className="pt-3 border-t border-slate-100 flex gap-2">
                             <button 
@@ -174,7 +183,7 @@ export default function App() {
           )}
         </section>
 
-        {/* Panel Derecho: Lista Dinámica de Favoritos */}
+        {/* Panel Lateral de Favoritos (Ocupa 1 columna en PC, se va abajo en celulares) */}
         <aside className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-fit sticky top-4">
           <h2 className="text-xl font-bold text-slate-800 border-b border-slate-100 pb-3 mb-3">
             Favoritos ({favorites.length})
