@@ -16,11 +16,19 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [favorites, setFavorites] = useState([]);
   
-  // NUEVO: Estado para almacenar los personajes bloqueados
-  const [blocked, setBlocked] = useState([]);
+  // NUEVO: Los estados ahora cargan sus datos iniciales desde el localStorage si existen
+  const [favorites, setFavorites] = useState(() => {
+    const localData = localStorage.getItem('rm-favorites');
+    return localData ? JSON.parse(localData) : [];
+  });
+  
+  const [blocked, setBlocked] = useState(() => {
+    const localData = localStorage.getItem('rm-blocked');
+    return localData ? JSON.parse(localData) : [];
+  });
 
+  // Carga inicial de la API
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
@@ -42,6 +50,16 @@ export default function App() {
     fetchCharacters();
   }, []);
 
+  // NUEVO: Guardar automáticamente en localStorage cuando cambie el array de favoritos
+  useEffect(() => {
+    localStorage.setItem('rm-favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  // NUEVO: Guardar automáticamente en localStorage cuando cambie el array de bloqueados
+  useEffect(() => {
+    localStorage.setItem('rm-blocked', JSON.stringify(blocked));
+  }, [blocked]);
+
   const toggleFavorite = (character) => {
     if (favorites.some(fav => fav.id === character.id)) {
       setFavorites(favorites.filter(fav => fav.id !== character.id));
@@ -50,20 +68,15 @@ export default function App() {
     }
   };
 
-  // NUEVO: Función para bloquear un personaje
   const blockCharacter = (character) => {
-    // Lo agregamos a la lista de bloqueados
     setBlocked([...blocked, character]);
-    // Si estaba en favoritos, lo sacamos automáticamente por lógica
     setFavorites(favorites.filter(fav => fav.id !== character.id));
   };
 
-  // NUEVO: Función para desbloquear todos y restaurar la lista
   const resetBlocked = () => {
     setBlocked([]);
   };
 
-  // MODIFICADO: Ahora filtramos por la barra de búsqueda Y ADEMÁS excluimos los que estén bloqueados
   const filteredCharacters = characters.filter((char) =>
     char.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     !blocked.some(b => b.id === char.id)
@@ -78,7 +91,6 @@ export default function App() {
         {/* Panel Izquierdo/Central: Buscador, Controles y Listado */}
         <section className="md:col-span-3 space-y-4">
           
-          {/* Barra de búsqueda y botón de restaurar bloqueados */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-3 items-center justify-between">
             <input
               type="text"
@@ -88,7 +100,6 @@ export default function App() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             
-            {/* NUEVO: Botón indicador de bloqueados */}
             {blocked.length > 0 && (
               <button 
                 onClick={resetBlocked}
@@ -133,7 +144,6 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* NUEVO: Botones de Favorito y Bloquear en paralelo */}
                         <div className="p-4 pt-0">
                           <div className="pt-3 border-t border-slate-100 flex gap-2">
                             <button 
